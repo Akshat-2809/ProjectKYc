@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { agentLogout } from "@/app/agent/actions";
 import { BUSINESS_NAME } from "@/lib/brand";
 
 export function AgentBar({ name }: { name: string }) {
@@ -12,7 +11,7 @@ export function AgentBar({ name }: { name: string }) {
         </Link>
         <nav className="topnav">
           <span className="who" title="Signed in agent">{name}</span>
-          <form action={agentLogout}>
+          <form action="/api/agent/logout" method="post">
             <button type="submit" className="btn btn-ghost btn-sm">Sign out</button>
           </form>
         </nav>

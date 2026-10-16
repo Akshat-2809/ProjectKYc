@@ -1,8 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { redirect } from "next/navigation";
-import { endAgentSession, requireAgent, startAgentSession } from "@/lib/auth";
+import { requireAgent, startAgentSession } from "@/lib/auth";
 import * as steps from "@/lib/stage-ops";
 import { UNDO_MINUTES } from "@/lib/stages";
 import { DUMMY_HASH, verifyPassword } from "@/lib/password";
@@ -44,10 +43,6 @@ export async function agentLogin(_prev: LoginState, formData: FormData): Promise
   return { ok: true, name: agent.name.split(" ")[0] };
 }
 
-export async function agentLogout(): Promise<void> {
-  await endAgentSession();
-  redirect("/agent/login");
-}
 
 // ─── Steps after approval ─────────────────────────────────────
 // All rules live in lib/stage-ops.ts; each action is limited to the agent's own entries.

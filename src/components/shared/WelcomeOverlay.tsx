@@ -1,20 +1,19 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import type React from "react";
 
 /** Full-screen "Hello <name>" moment shown after a successful sign-in, then opens `to`. */
 export function WelcomeOverlay({ name, to, sub }: { name: string; to: string; sub: string }) {
-  const router = useRouter();
-
   useEffect(() => {
-    router.prefetch(to);
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const t = setTimeout(() => router.replace(to), reduce ? 700 : 2000);
+    // Full page load (not client-side navigation) so the login page isn't kept alive in the
+    // background with its "signed in" state — otherwise this screen could replay after sign-out.
+    const target = new URL(to, window.location.origin).href;
+    const t = setTimeout(() => window.location.replace(target), reduce ? 700 : 2000);
     return () => clearTimeout(t);
-  }, [router, to]);
+  }, [to]);
 
   const word = (text: string, offset: number) =>
     text.split("").map((ch, i) => (

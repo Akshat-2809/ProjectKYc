@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { logout } from "@/app/admin/actions";
 import { BUSINESS_NAME } from "@/lib/brand";
 import { AddAgentButton } from "./AddAgentButton";
 
@@ -19,7 +18,7 @@ export function AdminBar({ active = "submissions" }: { active?: "submissions" | 
             Agents
           </Link>
           <AddAgentButton />
-          <form action={logout}>
+          <form action="/api/admin/logout" method="post">
             <button type="submit" className="btn btn-ghost btn-sm">Sign out</button>
           </form>
         </nav>

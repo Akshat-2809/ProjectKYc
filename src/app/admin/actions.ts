@@ -2,7 +2,7 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { endAdminSession, requireAdmin, startAdminSession } from "@/lib/auth";
+import { requireAdmin, startAdminSession } from "@/lib/auth";
 import { env, STORAGE_BUCKET } from "@/lib/env";
 import { safeEqual, verifyPassword } from "@/lib/password";
 import { clearBucket, clientIp, isRateLimited, recordEvent } from "@/lib/rate-limit";
@@ -38,10 +38,6 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   return { ok: true, name: process.env.ADMIN_NAME?.trim() || "Viral" };
 }
 
-export async function logout(): Promise<void> {
-  await endAdminSession();
-  redirect("/admin/login");
-}
 
 // ─── Review actions (each one re-checks the session) ───────────
 
