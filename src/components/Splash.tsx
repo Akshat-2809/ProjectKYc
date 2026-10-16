@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { BUSINESS_NAME } from "@/lib/brand";
 
 /**
- * Opening animation for customers. Pure CSS, so it plays on the very first paint
+ * Opening animation for the home page. Pure CSS, so it plays on the very first paint
  * even before JavaScript loads, then lifts away to reveal the page.
  * A tiny script in the root layout skips it after the first view in a browser session.
  */

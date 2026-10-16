@@ -7,7 +7,8 @@ import { UNDO_MINUTES } from "@/lib/stages";
 import { DUMMY_HASH, verifyPassword } from "@/lib/password";
 import { clearBucket, clientIp, isRateLimited, recordEvent } from "@/lib/rate-limit";
 import { db } from "@/lib/supabase";
-import { normalizeMobile } from "@/lib/validation";
+import { UNIQUE_VIOLATION } from "@/lib/kyc";
+import { fullNameSchema, mobileSchema, normalizeMobile } from "@/lib/validation";
 import type { LoginState } from "@/components/shared/LoginForm";
 
 export async function agentLogin(_prev: LoginState, formData: FormData): Promise<LoginState> {
@@ -71,4 +72,75 @@ export async function agentUndo(id: string): Promise<steps.StepResult> {
   const r = await steps.undoLastAdvance(id, agent.id, UNDO_MINUTES);
   if (r?.ok) refresh();
   return r;
+}
+
+// ─── Fix a typo in the customer's name or mobile ──────────────
+// Allowed only before approval (Pending or Rejected): once the admin approves, they've checked
+// the Aadhaar against these details, so they're locked. Every change is written to History.
+
+export type EditDetailsState = { ok?: boolean; error?: string; field?: "fullName" | "mobile"; at?: number } | undefined;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EDITABLE = ["pending", "rejected"];
+
+export async function agentEditDetails(
+  id: string,
+  _prev: EditDetailsState,
+  formData: FormData,
+): Promise<EditDetailsState> {
+  const agent = await requireAgent();
+  const fail = (error: string, field?: "fullName" | "mobile"): EditDetailsState => ({ error, field, at: Date.now() });
+  if (!UUID.test(id)) return fail("Entry not found.");
+
+  const name = fullNameSchema.safeParse(String(formData.get("fullName") ?? ""));
+  if (!name.success) return fail(name.error.issues[0].message, "fullName");
+  const mobile = mobileSchema.safeParse(String(formData.get("mobile") ?? ""));
+  if (!mobile.success) return fail(mobile.error.issues[0].message, "mobile");
+
+  const supabase = db();
+  const { data: current } = await supabase
+    .from("kyc_submissions")
+    .select("full_name, mobile, status")
+    .eq("id", id)
+    .eq("agent_id", agent.id) // only their own entries
+    .maybeSingle();
+  if (!current) return fail("Entry not found.");
+  if (!EDITABLE.includes(current.status)) {
+    return fail("This KYC is already approved, so the name and number are locked. Ask the admin if something is wrong.");
+  }
+
+  const changes: string[] = [];
+  if (current.full_name !== name.data) changes.push(`name “${current.full_name}” → “${name.data}”`);
+  if (current.mobile !== mobile.data) changes.push(`mobile ${current.mobile} → ${mobile.data}`);
+  if (changes.length === 0) return fail("Nothing changed. Edit the name or number, then save.");
+
+  const { data: updated, error } = await supabase
+    .from("kyc_submissions")
+    .update({ full_name: name.data, mobile: mobile.data })
+    .eq("id", id)
+    .eq("agent_id", agent.id)
+    .in("status", EDITABLE) // in case the admin approved it a moment ago
+    .select("id");
+  if (error) {
+    if (error.code === UNIQUE_VIOLATION) return fail("Another KYC already uses this mobile number.", "mobile");
+    console.error("edit details failed", error);
+    return fail("Couldn't save the changes. Try again.");
+  }
+  if (!updated?.length) {
+    return fail("This KYC was just approved, so the name and number are locked. Ask the admin if something is wrong.");
+  }
+
+  await supabase.from("kyc_stage_events").insert({
+    submission_id: id,
+    from_stage: null,
+    to_stage: null,
+    by_role: "agent",
+    by_agent_id: agent.id,
+    is_undo: false,
+    action: "edit",
+    note: `Details corrected: ${changes.join(", ")}`,
+  });
+
+  refresh();
+  return { ok: true, at: Date.now() };
 }

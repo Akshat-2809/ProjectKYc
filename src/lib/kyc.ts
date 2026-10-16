@@ -13,7 +13,7 @@ export async function readPdf(
   value: FormDataEntryValue | null,
 ): Promise<{ bytes: Uint8Array; size: number } | { error: string }> {
   if (!value || typeof value === "string" || value.size === 0) {
-    return { error: "Upload your Aadhaar card as a PDF." };
+    return { error: "Upload the Aadhaar card as a PDF." };
   }
   if (value.size > MAX_PDF_BYTES) {
     return { error: "The PDF is larger than 4 MB. Compress it and upload again." };

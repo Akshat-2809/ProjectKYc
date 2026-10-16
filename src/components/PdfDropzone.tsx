@@ -14,7 +14,7 @@ function formatSize(bytes: number) {
 /** Checks type and size in the browser so customers get instant feedback. */
 export function checkPdf(file: File): string | null {
   const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-  if (!isPdf) return "That file isn't a PDF. Upload your Aadhaar card as a PDF.";
+  if (!isPdf) return "That file isn't a PDF. Upload the Aadhaar card as a PDF.";
   if (file.size > MAX_BYTES) return "The PDF is larger than 4 MB. Compress it and upload again.";
   return null;
 }
@@ -69,7 +69,7 @@ export function PdfDropzone({
           </>
         ) : (
           <>
-            <strong>{dragging ? "Drop it here" : "Choose your Aadhaar PDF"}</strong>
+            <strong>{dragging ? "Drop it here" : "Choose the Aadhaar PDF"}</strong>
             <span className="hint">Or drag it here. PDF only, up to 4 MB.</span>
           </>
         )}

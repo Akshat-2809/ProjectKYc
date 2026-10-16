@@ -12,9 +12,8 @@ Built with **Next.js 16** and **Supabase**, hosted on **Vercel**. Runs entirely 
 |---|---|---|
 | **Admin** | `/admin/login` with the phone number and password set in the environment variables | Create and manage agents, review every submission, approve or reject KYC, run or correct any step, mark entries as paid, delete customer data |
 | **Agent** | `/agent/login` with the phone number and password the admin gave them | Submit KYC for their own customers, re-upload rejected ones, book slots and record each step. They only ever see their own customers |
-| **Individual customer** | No login: `/kyc` | Submit their own KYC, then check status at `/status` with their reference ID and mobile number |
 
-The home page (`/`) plays a short opening animation, then offers three choices: **Agent login**, **Admin** and **Individual**.
+The home page (`/`) plays a short opening animation, then offers two choices: **Agent login** and **Admin**. There is no self-service option for customers; every KYC is submitted by an agent.
 
 ---
 
@@ -30,7 +29,7 @@ Submitted ─▶ Pending ─▶ Approved ─▶ Slot booking ─▶ Scanner ─�
 
 | Step | Who acts | What happens |
 |---|---|---|
-| **Pending** | Admin | Opens the entry, checks the Aadhaar PDF against the name and mobile, then **Approve** or **Reject** (with a reason the agent or customer sees) |
+| **Pending** | Admin | Opens the entry, checks the Aadhaar PDF against the name and mobile, then **Approve** or **Reject** (with a reason the agent sees) |
 | **Slot booking** | Agent (or admin) | Picks the date and start time agreed with the customer. Each slot is 20 minutes. One agent can't book two overlapping slots; different agents can use the same time. Can be rescheduled until the scanner is done |
 | **Scanner** | Agent (or admin) | **Scanner done** moves to OTP. **Scanner failed** goes back to Slot booking for a new slot |
 | **OTP** | Agent (or admin) | **OTP done** moves to Active KYC. **OTP failed** rejects the application; the Aadhaar must be re-uploaded and approved again |
@@ -45,7 +44,7 @@ Agents can undo their own last "done" click within 10 minutes. Anything else is 
 ## Features
 
 **Admin**
-- Submissions list with tabs for every status and step, search by name, mobile or reference ID, and a filter by agent or individual customers
+- Submissions list with tabs for every status and step, search by name, mobile or reference ID, and a filter by agent
 - Review page with the Aadhaar PDF (opened through a link that expires after 10 minutes), step tracker, actions and full history
 - **+ Add agent** in the top bar, which then shows a ready-to-send message with the agent's sign-in details and a **Copy message** button; the Agents page shows each agent's count per step, plus reset password, turn off/on and delete (only for agents with no entries)
 - **Delete permanently** removes both the record and the PDF from storage
@@ -54,6 +53,7 @@ Agents can undo their own last "done" click within 10 minutes. Anything else is 
 - Dashboard with their customers, status/step tabs, upcoming slots and how many customers still need a slot
 - New customer form with upload progress, and a **Next customer** button for back-to-back entries
 - Each entry shows a step tracker with the right buttons for the current step
+- **Edit name or number** on an entry fixes a typo in the customer's name or mobile without re-uploading the PDF. Allowed only while the entry is Pending or Rejected; once the admin approves, the details are locked. Every change is recorded in History
 
 **Everyone**
 - Works on phones, tablets and desktops
@@ -67,7 +67,7 @@ Agents can undo their own last "done" click within 10 minutes. Anything else is 
 - **Private PDFs:** Aadhaar PDFs live in a private bucket and are only viewable through short-lived signed links.
 - **Hashed passwords:** admin and agent passwords are stored only as scrypt hashes.
 - **Sessions:** sessions are signed, httpOnly cookies. The admin is signed out after 8 hours, agents after 12. Resetting an agent's password or turning them off signs them out everywhere.
-- **Rate limits:** sign-in attempts, submissions and status lookups are limited per network.
+- **Rate limits:** sign-in attempts are limited per network.
 - **Server-side rules:** every rule (agents only touch their own entries, one step at a time, only the admin marks paid, one KYC per mobile number) is enforced on the server, not just hidden in the UI.
 - **Upload checks:** files must be real PDFs, checked by their contents, and at most 4 MB.
 
@@ -78,12 +78,9 @@ Agents can undo their own last "done" click within 10 minutes. Anything else is 
 ```
 src/
   app/
-    page.tsx              Home: three-way chooser (+ opening animation)
-    kyc/                  Individual customer form
-    status/               Customer status lookup and re-upload
+    page.tsx              Home: Agent / Admin chooser (+ opening animation)
     admin/                Admin: submissions, review page [id], agents, login, server actions
     agent/                Agent: dashboard, new KYC, entry page [id], login, server actions
-    api/kyc/…             Upload and status endpoints for individuals
     api/agent/kyc/…       Upload endpoints for agents
   components/             UI (forms, step tracker, step actions, dialogs, icons)
   lib/
@@ -167,6 +164,7 @@ After that, every `git push` to `main` deploys automatically.
 |---|---|
 | Add an agent | Admin → **+ Add agent** → name, phone and password → **Copy message** and paste it to the agent on WhatsApp or SMS. The password stays the same until the admin changes it; agents can't change it |
 | Agent forgot their password | Admin → Agents → **Reset password** → **Copy message** and send it to them |
+| Site moves to a new web address | Update `SIGN_IN_URL` in `src/lib/credentials.ts` so the copied message links to the new agent sign-in page |
 | Agent leaves | Admin → Agents → **Turn off**. History is kept; delete only works for agents with no entries |
 | Remove customer data | Open the entry → **Delete permanently**. This removes the record and the PDF. Don't delete rows directly in Supabase, which would leave the PDF behind |
 | Change the admin password | `npm run hash-password` → update `ADMIN_PASSWORD_HASH` in Vercel → **Redeploy** |

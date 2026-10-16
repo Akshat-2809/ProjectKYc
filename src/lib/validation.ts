@@ -19,7 +19,7 @@ export const fullNameSchema = z
   .string()
   .transform((v) => v.trim().replace(/\s+/g, " "))
   .refine((v) => v.length >= 2 && v.length <= 100, {
-    message: "Enter your full name as printed on your Aadhaar card.",
+    message: "Enter the customer's full name as printed on their Aadhaar card.",
   })
   .refine((v) => /^[\p{L}][\p{L}\p{M} .'-]*$/u.test(v), {
     message: "Name can only contain letters, spaces, dots, hyphens and apostrophes.",
@@ -37,7 +37,7 @@ export const rejectionReasonSchema = z
   .string()
   .transform((v) => v.trim())
   .refine((v) => v.length >= 5 && v.length <= 500, {
-    message: "Write a reason of at least 5 characters so the customer knows what to fix.",
+    message: "Write a reason of at least 5 characters so the agent knows what to fix.",
   });
 
 /** Checks the file really is a PDF by its first bytes, not just its name. */

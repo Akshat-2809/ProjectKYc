@@ -41,14 +41,14 @@ export function ReviewActions({
             <CheckIcon size={18} /> KYC approved
           </h2>
           <p className="hint" style={{ margin: 0 }}>
-            Approved{reviewed ? ` on ${reviewed}` : ""}. The customer sees this on their status page.
+            Approved{reviewed ? ` on ${reviewed}` : ""}. The agent sees this on their list.
           </p>
         </section>
       )}
 
       {status === "rejected" && (
         <section className="panel" key="rejected">
-          <h2>Waiting for the customer</h2>
+          <h2>Waiting for the agent to re-upload</h2>
           <p className="hint" style={{ margin: 0 }}>
             Rejected{reviewed ? ` on ${reviewed}` : ""}. This moves back to Pending when they upload again.
           </p>
@@ -89,7 +89,7 @@ export function ReviewActions({
               ))}
             </div>
             <div className="field">
-              <label className="label" htmlFor="reason">Reason the customer will see</label>
+              <label className="label" htmlFor="reason">Reason the agent will see</label>
               <textarea
                 id="reason"
                 name="reason"

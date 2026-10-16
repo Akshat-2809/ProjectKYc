@@ -74,20 +74,17 @@ async function Submissions({ searchParams }: { searchParams: Search }) {
   const agents = agentRows ?? [];
   const agentName = new Map(agents.map((a) => [a.id, a.name]));
 
-  // "" = everyone, "individual" = customers who submitted themselves, otherwise an agent id
-  const agentFilter =
-    params.agent === "individual" || agents.some((a) => a.id === params.agent) ? (params.agent as string) : "";
+  // "" = everyone, otherwise an agent id
+  const agentFilter = agents.some((a) => a.id === params.agent) ? (params.agent as string) : "";
 
   let summary = supabase.from("kyc_submissions").select("status, stage");
-  if (agentFilter === "individual") summary = summary.is("agent_id", null);
-  else if (agentFilter) summary = summary.eq("agent_id", agentFilter);
+  if (agentFilter) summary = summary.eq("agent_id", agentFilter);
 
   let query = supabase
     .from("kyc_submissions")
     .select("id, ref_code, full_name, mobile, status, stage, slot_at, attempts, submitted_at, agent_id")
     .limit(300);
-  if (agentFilter === "individual") query = query.is("agent_id", null);
-  else if (agentFilter) query = query.eq("agent_id", agentFilter);
+  if (agentFilter) query = query.eq("agent_id", agentFilter);
   if (tab === "pending" || tab === "rejected") query = query.eq("status", tab);
   else if (tab !== "all") query = query.eq("status", "approved").eq("stage", tab);
   if (q) query = query.or(`full_name.ilike.%${q}%,mobile.ilike.%${q}%,ref_code.ilike.%${q}%`);
@@ -108,8 +105,7 @@ async function Submissions({ searchParams }: { searchParams: Search }) {
     if (agentFilter) p.set("agent", agentFilter);
     return `/admin?${p}`;
   };
-  const filterLabel =
-    agentFilter === "individual" ? "individual customers" : agentFilter ? agentName.get(agentFilter) : null;
+  const filterLabel = agentFilter ? agentName.get(agentFilter) : null;
 
   return (
     <>
@@ -134,12 +130,18 @@ async function Submissions({ searchParams }: { searchParams: Search }) {
               placeholder="Name, mobile or reference ID"
               aria-label="Search submissions"
             />
-            <button type="submit" className="btn btn-ghost">Search</button>
+            <button type="submit" className="btn btn-ghost">
+              Search
+            </button>
           </div>
         </form>
       </div>
 
-      {params.deleted && <p className="flash" role="status">Customer data deleted permanently.</p>}
+      {params.deleted && (
+        <p className="flash" role="status">
+          Customer data deleted permanently.
+        </p>
+      )}
 
       <nav className="tabs" aria-label="Filter by status">
         {TABS.map((t) => (
@@ -185,7 +187,9 @@ async function Submissions({ searchParams }: { searchParams: Search }) {
               {rows.map((r, i) => (
                 <tr key={r.id} style={{ "--i": Math.min(i, 12) } as React.CSSProperties}>
                   <td data-label="Name">
-                    <Link className="row-link" href={`/admin/${r.id}`}>{r.full_name}</Link>
+                    <Link className="row-link" href={`/admin/${r.id}`}>
+                      {r.full_name}
+                    </Link>
                   </td>
                   <td data-label="Mobile">{r.mobile}</td>
                   <td data-label="By">
@@ -194,10 +198,12 @@ async function Submissions({ searchParams }: { searchParams: Search }) {
                         {agentName.get(r.agent_id) ?? "Agent"}
                       </Link>
                     ) : (
-                      <span className="by">Individual</span>
+                      <span className="by">No agent</span>
                     )}
                   </td>
-                  <td data-label="Reference" className="mono">{r.ref_code}</td>
+                  <td data-label="Reference" className="mono">
+                    {r.ref_code}
+                  </td>
                   <td data-label="Submitted">
                     {when(r.submitted_at)}
                     {r.attempts > 1 && <span className="by"> (upload {r.attempts})</span>}

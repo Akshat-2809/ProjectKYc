@@ -9,7 +9,7 @@ import { BUSINESS_NAME } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: `KYC verification · ${BUSINESS_NAME}`,
-  description: "Submit your details and Aadhaar card to complete KYC.",
+  description: "KYC desk for agents and the admin.",
   robots: { index: false, follow: false },
 };
 

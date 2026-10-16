@@ -11,7 +11,6 @@ export function AgentFilter({ agents, value }: { agents: { id: string; name: str
       onChange={(e) => e.currentTarget.form?.requestSubmit()}
     >
       <option value="">Everyone</option>
-      <option value="individual">Individual customers</option>
       {agents.length > 0 && (
         <optgroup label="Agents">
           {agents.map((a) => (

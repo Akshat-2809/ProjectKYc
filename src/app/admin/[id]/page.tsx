@@ -117,7 +117,7 @@ async function Review({ params }: { params: Params }) {
                       {submittedBy.name} (agent, {submittedBy.phone})
                     </Link>
                   ) : (
-                    "The customer (individual)"
+                    "No agent"
                   )}
                 </dd>
               </div>

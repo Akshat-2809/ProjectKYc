@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type React from "react";
-import { IdCardIcon, ShieldIcon, UsersIcon } from "@/components/Icons";
+import { ShieldIcon, UsersIcon } from "@/components/Icons";
 import { Splash } from "@/components/Splash";
 import { TopBar } from "@/components/TopBar";
 
@@ -17,19 +17,13 @@ const OPTIONS = [
     body: "Review submissions, approve or reject them, and manage agent accounts.",
     Icon: ShieldIcon,
   },
-  {
-    href: "/kyc",
-    title: "Individual",
-    body: "Completing your own KYC? Upload your Aadhaar card here. No account needed.",
-    Icon: IdCardIcon,
-  },
 ];
 
 export default function Home() {
   return (
     <div className="with-splash">
       <Splash />
-      <TopBar link={{ href: "/status", label: "Check status" }} showHome={false} />
+      <TopBar showHome={false} />
       <main className="page page-wide">
         <h1 className="enter">How are you signing in?</h1>
         <p className="lede enter" style={{ "--i": 1 } as React.CSSProperties}>

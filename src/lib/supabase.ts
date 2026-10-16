@@ -19,7 +19,7 @@ export type KycSubmission = {
   reviewed_at: string | null;
   created_at: string;
   updated_at: string;
-  /** null = submitted by the customer themselves ("Individual") */
+  /** The agent who submitted it (null only for old entries made before agents-only) */
   agent_id: string | null;
   /** Step after approval; null until approved */
   stage: import("./stages").Stage | null;

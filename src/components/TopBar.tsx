@@ -6,7 +6,7 @@ export function TopBar({
   showHome = true,
 }: {
   link?: { href: string; label: string };
-  /** Outlined "Home" button back to the three-way chooser */
+  /** Outlined "Home" button back to the Agent / Admin chooser */
   showHome?: boolean;
 }) {
   return (

@@ -1758,7 +1758,8 @@ html:not(.splash-seen) .with-splash .choice.enter {
     max-width: 64rem;
   }
   .choices {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 52rem;
     gap: 1.1rem;
   }
   .choice {
@@ -2573,3 +2574,20 @@ dialog.agent-dialog {
   overflow-wrap: anywhere;
 }
 
+
+/* ── Agent: fix the customer's name / mobile before approval ── */
+.edit-details {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--paper);
+}
+.edit-details-btn {
+  justify-self: start;
+  width: fit-content;
+}
+.history li[data-kind="edit"]::before {
+  background: var(--indigo);
+}

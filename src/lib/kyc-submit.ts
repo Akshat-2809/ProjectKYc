@@ -14,17 +14,13 @@ export async function parseForm(request: Request): Promise<FormData | NextRespon
   }
 }
 
-/** Validates name, mobile, consent and PDF from the form. */
+/** Validates name, mobile and PDF from the form. */
 export async function readFields(form: FormData) {
   const name = fullNameSchema.safeParse(String(form.get("fullName") ?? ""));
   if (!name.success) return { error: jsonError(name.error.issues[0].message, 400, "fullName") };
 
   const mobile = mobileSchema.safeParse(String(form.get("mobile") ?? ""));
   if (!mobile.success) return { error: jsonError(mobile.error.issues[0].message, 400, "mobile") };
-
-  if (form.get("consent") !== "yes") {
-    return { error: jsonError("Tick the consent box to continue.", 400, "consent") };
-  }
 
   const pdf = await readPdf(form.get("file"));
   if ("error" in pdf) return { error: jsonError(pdf.error, 400, "file") };
@@ -33,17 +29,15 @@ export async function readFields(form: FormData) {
 }
 
 /**
- * Creates a new KYC submission. agentId is null for customers submitting themselves.
- * One KYC per mobile number across everyone (agents and individuals).
+ * Creates a new KYC submission for an agent's customer.
+ * One KYC per mobile number across all agents.
  */
 export async function createSubmission(
   fields: { fullName: string; mobile: string; pdf: { bytes: Uint8Array; size: number } },
-  agentId: string | null,
+  agentId: string,
 ): Promise<NextResponse> {
   const supabase = db();
-  const duplicateMessage = agentId
-    ? "A KYC for this mobile number already exists. Search your list, or ask the admin."
-    : "A KYC request for this mobile number already exists. Use “Check status” with your reference ID.";
+  const duplicateMessage = "A KYC for this mobile number already exists. Search your list, or ask the admin.";
 
   const { data: existing } = await supabase
     .from("kyc_submissions")

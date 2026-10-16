@@ -6,19 +6,12 @@ import { tenDigits } from "@/lib/phone";
 import { AlertIcon, CheckIcon, Spinner } from "./Icons";
 import { PdfDropzone, checkPdf } from "./PdfDropzone";
 
-type Field = "fullName" | "mobile" | "file" | "consent";
+type Field = "fullName" | "mobile" | "file";
 type Errors = Partial<Record<Field, string>>;
 type Result = { refCode: string; fullName: string; mobile: string; id?: string };
 
+/** Used only by agents: a new customer, or a re-upload after rejection. */
 type Props =
-  | { mode: "new"; onDone: (result: Result) => void }
-  | {
-      mode: "resubmit";
-      refCode: string;
-      currentMobile: string;
-      initialName: string;
-      onDone: (result: Result) => void;
-    }
   | { mode: "agent-new"; onDone: (result: Result) => void }
   | {
       mode: "agent-resubmit";
@@ -30,8 +23,6 @@ type Props =
     };
 
 const ENDPOINT: Record<Props["mode"], string> = {
-  new: "/api/kyc/submit",
-  resubmit: "/api/kyc/resubmit",
   "agent-new": "/api/agent/kyc/submit",
   "agent-resubmit": "/api/agent/kyc/resubmit",
 };
@@ -43,16 +34,15 @@ function cleanMobile(v: string) {
   return d;
 }
 
-function validate(fullName: string, mobile: string, file: File | null, consent: boolean): Errors {
+function validate(fullName: string, mobile: string, file: File | null): Errors {
   const errors: Errors = {};
-  if (fullName.trim().length < 2) errors.fullName = "Enter your full name as printed on your Aadhaar card.";
+  if (fullName.trim().length < 2) errors.fullName = "Enter the customer's full name as printed on their Aadhaar card.";
   if (!/^[6-9]\d{9}$/.test(cleanMobile(mobile))) errors.mobile = "Enter a valid 10-digit Indian mobile number.";
-  if (!file) errors.file = "Upload your Aadhaar card as a PDF.";
+  if (!file) errors.file = "Upload the Aadhaar card as a PDF.";
   else {
     const fileError = checkPdf(file);
     if (fileError) errors.file = fileError;
   }
-  if (!consent) errors.consent = "Tick the box to continue.";
   return errors;
 }
 
@@ -87,14 +77,11 @@ function StepNum({ n, done }: { n: number; done: boolean }) {
 }
 
 export function KycForm(props: Props) {
-  const resubmit = props.mode === "resubmit" || props.mode === "agent-resubmit";
-  const byAgent = props.mode === "agent-new" || props.mode === "agent-resubmit";
+  const resubmit = props.mode === "agent-resubmit";
   const router = useRouter();
   const [fullName, setFullName] = useState(resubmit ? props.initialName : "");
   const [mobile, setMobile] = useState(resubmit ? props.currentMobile : "");
   const [file, setFile] = useState<File | null>(null);
-  // Agents don't see the consent step, so it counts as given for them.
-  const [consent, setConsent] = useState(props.mode === "agent-new" || props.mode === "agent-resubmit");
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -103,13 +90,13 @@ export function KycForm(props: Props) {
   const busy = progress !== null;
   const detailsDone = fullName.trim().length >= 2 && /^[6-9]\d{9}$/.test(cleanMobile(mobile));
   const fileDone = Boolean(file) && !errors.file;
-  const totalSteps = byAgent ? 2 : 3;
-  const doneCount = [detailsDone, fileDone, ...(byAgent ? [] : [consent])].filter(Boolean).length;
+  const totalSteps = 2;
+  const doneCount = [detailsDone, fileDone].filter(Boolean).length;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setFormError(null);
-    const found = validate(fullName, mobile, file, consent);
+    const found = validate(fullName, mobile, file);
     setErrors(found);
     if (Object.keys(found).length > 0) {
       setAttempt((a) => a + 1);
@@ -122,19 +109,14 @@ export function KycForm(props: Props) {
     const body = new FormData();
     body.set("fullName", fullName);
     body.set("mobile", mobile);
-    body.set("consent", "yes");
     body.set("file", file as File);
-    if (props.mode === "resubmit") {
-      body.set("ref", props.refCode);
-      body.set("currentMobile", props.currentMobile);
-    }
     if (props.mode === "agent-resubmit") body.set("id", props.id);
 
     setProgress(0);
     try {
       const { status, data } = await upload(ENDPOINT[props.mode], body, setProgress);
 
-      if (status === 401 && byAgent) {
+      if (status === 401) {
         router.push("/agent/login");
         return;
       }
@@ -170,9 +152,7 @@ export function KycForm(props: Props) {
       : "Saving…"
     : resubmit
       ? "Upload again"
-      : byAgent
-        ? "Submit customer KYC"
-        : "Submit for verification";
+      : "Submit customer KYC";
 
   return (
     <form onSubmit={onSubmit} noValidate>
@@ -190,7 +170,7 @@ export function KycForm(props: Props) {
       <section className="step" data-done={detailsDone}>
         <StepNum n={1} done={detailsDone} />
         <div>
-          <h2>{byAgent ? "Customer details" : "Your details"}</h2>
+          <h2>Customer details</h2>
           <div className="step-body">
             <div className="field">
               <label className="label" htmlFor="fullName">Full name</label>
@@ -210,7 +190,7 @@ export function KycForm(props: Props) {
               {errors.fullName ? (
                 <p key={`n-${attempt}`} className="field-error">{errors.fullName}</p>
               ) : (
-                <p id="fullName-hint" className="hint">Exactly as it appears on {byAgent ? "the customer’s" : "your"} Aadhaar card.</p>
+                <p id="fullName-hint" className="hint">Exactly as it appears on the customer’s Aadhaar card.</p>
               )}
             </div>
 
@@ -237,7 +217,7 @@ export function KycForm(props: Props) {
               {errors.mobile ? (
                 <p key={`m-${attempt}`} className="field-error">{errors.mobile}</p>
               ) : (
-                <p id="mobile-hint" className="hint">The number registered with {byAgent ? "the customer’s" : "your"} Aadhaar.</p>
+                <p id="mobile-hint" className="hint">The number registered with the customer’s Aadhaar.</p>
               )}
             </div>
           </div>
@@ -265,46 +245,13 @@ export function KycForm(props: Props) {
         </div>
       </section>
 
-      {byAgent ? (
-        // Agents: no consent step, just the submit button under the upload
-        <div className="agent-submit">
-            <button type="submit" className="btn btn-primary btn-block btn-progress" disabled={busy} aria-live="polite">
-              {busy && <span className="fill" style={{ width: `${progress}%` }} />}
-              {busy && <Spinner />}
-              <span>{label}</span>
-            </button>
-        </div>
-      ) : (
-        <section className="step" data-done={consent}>
-          <StepNum n={3} done={consent} />
-          <div>
-            <h2>Confirm and submit</h2>
-            <div className="step-body">
-              <label className="check checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={consent}
-                  onChange={(e) => {
-                    setConsent(e.target.checked);
-                    if (errors.consent) setErrors((p) => ({ ...p, consent: undefined }));
-                  }}
-                  aria-invalid={Boolean(errors.consent)}
-                />
-                <span>
-                  I agree to share my Aadhaar card for identity verification. It will be used only for KYC and
-                  deleted once my account is set up.
-                </span>
-              </label>
-              {errors.consent && <p key={`c-${attempt}`} className="field-error">{errors.consent}</p>}
-            <button type="submit" className="btn btn-primary btn-block btn-progress" disabled={busy} aria-live="polite">
-              {busy && <span className="fill" style={{ width: `${progress}%` }} />}
-              {busy && <Spinner />}
-              <span>{label}</span>
-            </button>
-            </div>
-          </div>
-        </section>
-      )}
+      <div className="agent-submit">
+        <button type="submit" className="btn btn-primary btn-block btn-progress" disabled={busy} aria-live="polite">
+          {busy && <span className="fill" style={{ width: `${progress}%` }} />}
+          {busy && <Spinner />}
+          <span>{label}</span>
+        </button>
+      </div>
     </form>
   );
 }

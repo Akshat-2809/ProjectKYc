@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AgentBar } from "@/components/agent/AgentBar";
 import { AgentReupload } from "@/components/agent/AgentReupload";
+import { EditDetails } from "@/components/agent/EditDetails";
 import { AlertIcon, ArrowLeftIcon } from "@/components/Icons";
 import { requireAgent } from "@/lib/auth";
 import { STORAGE_BUCKET } from "@/lib/env";
@@ -112,6 +113,9 @@ async function Entry({ params }: { params: Params }) {
               </>
             )}
           </dl>
+          {(sub.status === "pending" || sub.status === "rejected") && (
+            <EditDetails key={`${sub.full_name}|${sub.mobile}`} id={sub.id} name={sub.full_name} mobile={sub.mobile} />
+          )}
           {pdfUrl && (
             <p style={{ margin: 0 }}>
               <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">
