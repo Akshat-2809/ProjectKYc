@@ -9,7 +9,19 @@ import { hashPassword } from "@/lib/password";
 import { db } from "@/lib/supabase";
 import { mobileSchema } from "@/lib/validation";
 
-export type AgentFormState = { error?: string; ok?: boolean; message?: string; at?: number } | undefined;
+export type AgentFormState =
+  | {
+      error?: string;
+      ok?: boolean;
+      message?: string;
+      at?: number;
+      /** Saved agent's details, for the "send sign-in details" buttons. */
+      name?: string;
+      phone?: string;
+      /** Added in the admin's browser only (never sent back by the server). */
+      password?: string;
+    }
+  | undefined;
 
 const nameSchema = z
   .string()
@@ -50,6 +62,8 @@ export async function createAgent(_prev: AgentFormState, formData: FormData): Pr
     ok: true,
     at: Date.now(),
     message: `${name.data} can now sign in with ${phone.data} and the password you set.`,
+    name: name.data,
+    phone: phone.data,
   };
 }
 
@@ -77,7 +91,7 @@ export async function resetAgentPassword(
   if (error) return fail("Couldn't change the password. Try again.");
 
   refresh();
-  return { ok: true, at: Date.now(), message: "Password changed. Share the new one with the agent." };
+  return { ok: true, at: Date.now(), message: "Password changed. They've been signed out everywhere." };
 }
 
 export async function setAgentActive(id: string, active: boolean): Promise<AgentFormState> {

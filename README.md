@@ -47,7 +47,7 @@ Agents can undo their own last "done" click within 10 minutes. Anything else is 
 **Admin**
 - Submissions list with tabs for every status and step, search by name, mobile or reference ID, and a filter by agent or individual customers
 - Review page with the Aadhaar PDF (opened through a link that expires after 10 minutes), step tracker, actions and full history
-- **+ Add agent** in the top bar; the Agents page shows each agent's count per step, plus reset password, turn off/on and delete (only for agents with no entries)
+- **+ Add agent** in the top bar, which then shows a ready-to-send message with the agent's sign-in details and a **Copy message** button; the Agents page shows each agent's count per step, plus reset password, turn off/on and delete (only for agents with no entries)
 - **Delete permanently** removes both the record and the PDF from storage
 
 **Agents**
@@ -165,8 +165,8 @@ After that, every `git push` to `main` deploys automatically.
 
 | Task | How |
 |---|---|
-| Add an agent | Admin → **+ Add agent** → name, phone and password → share the password with the agent |
-| Agent forgot their password | Admin → Agents → **Reset password** |
+| Add an agent | Admin → **+ Add agent** → name, phone and password → **Copy message** and paste it to the agent on WhatsApp or SMS. The password stays the same until the admin changes it; agents can't change it |
+| Agent forgot their password | Admin → Agents → **Reset password** → **Copy message** and send it to them |
 | Agent leaves | Admin → Agents → **Turn off**. History is kept; delete only works for agents with no entries |
 | Remove customer data | Open the entry → **Delete permanently**. This removes the record and the PDF. Don't delete rows directly in Supabase, which would leave the PDF behind |
 | Change the admin password | `npm run hash-password` → update `ADMIN_PASSWORD_HASH` in Vercel → **Redeploy** |

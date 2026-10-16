@@ -2550,3 +2550,26 @@ dialog.agent-dialog {
     align-items: flex-end;
   }
 }
+
+/* ── Send sign-in details to an agent ── */
+.share-creds {
+  display: grid;
+  gap: 0.75rem;
+}
+.share-title {
+  margin: 0;
+  font-weight: 600;
+}
+.share-preview {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+

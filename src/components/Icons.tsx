@@ -11,6 +11,7 @@ const base = (size = 20) => ({
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
   "aria-hidden": true,
+  style: { flexShrink: 0 }, // never squeezed by long text next to it
 });
 
 export const CheckIcon = ({ size, className }: P) => (

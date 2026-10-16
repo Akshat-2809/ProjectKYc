@@ -101,7 +101,7 @@ async function AgentList() {
             <p className="hint" style={{ margin: 0 }}>
               {a.last_login_at ? `Last signed in ${when(a.last_login_at)}` : "Hasn't signed in yet"}
             </p>
-            <AgentRowActions id={a.id} name={a.name} active={a.active} />
+            <AgentRowActions id={a.id} name={a.name} phone={a.phone} active={a.active} />
           </li>
         );
       })}
